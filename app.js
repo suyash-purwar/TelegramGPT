@@ -19,10 +19,8 @@ app.post('/receive', async (req, res) => {
         console.log(req.body);
         const text = req.body.message.text;
         const chatId = req.body.message.chat.id;
-        const response = bot.fetchResponse(text);
-        // Feed the response to telegram /sendMessage endpoint
-        const status = await bot.sendMessage(chatId, response.response);
-        console.log(status);
+        const response = await bot.fetchResponse(text);
+        const status = await bot.sendMessage(chatId, response);
         res.sendStatus(200);
     } catch (e) {
         res.send(e);
