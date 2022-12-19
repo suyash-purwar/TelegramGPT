@@ -1,4 +1,5 @@
 const express = require("express");
+const bot = require("./controllers/bot");
 
 app = express();
 
@@ -13,9 +14,19 @@ app.get('/', (req, res) => {
     });
 });
 
-app.post('/', (req, res) => {
-    console.log(req.body);
-    res.send(req.body);
+app.post('/receive', async (req, res) => {
+    try {
+        console.log(req.body);
+        const text = req.body.message.text;
+        const chatId = req.body.message.chat.id;
+        const response = bot.fetchResponse(text);
+        // Feed the response to telegram /sendMessage endpoint
+        const status = await bot.sendMessage(chatId, response.response);
+        console.log(status);
+        res.sendStatus(200);
+    } catch (e) {
+        res.send(e);
+    }
 });
 
 app.listen(PORT, () => {
