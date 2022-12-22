@@ -1,3 +1,3 @@
 # Hephestus
 
-A telegram chatbot powered by OpenAI's chatbot
+A telegram chatbot powered by OpenAI's ChatGPT
