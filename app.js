@@ -3,7 +3,7 @@ const bot = require("./controllers/bot");
 
 const app = express();
 
-const PORT = 3000 || process.env.PORT;
+const PORT = 3000;
 
 app.use(express.json());
 
@@ -15,14 +15,13 @@ app.get('/', (req, res) => {
 });
 
 app.post('/receive', async (req, res) => {
+    const chatId = req.body.message.chat.id;
+    const { text } = req.body.message;
     try {
-        const chatId = req.body.message.chat.id;
-        const { text } = req.body.message;
-
         const { data, type } = await bot.handleQuery(text);
         switch (type) {
             case 'image':
-                console.log(data);
+                await bot.sendImageMessage(chatId, data);
                 break;
             case 'text':
                 await bot.sendTextualMessage(chatId, data);
@@ -34,23 +33,22 @@ app.post('/receive', async (req, res) => {
     } catch (e) {
         switch (e.message) {
             case "COMMAND_DOES_NOT_EXIST":
-                // Send message for command does not exist
-                console.log("Heda hai kya?");
+                await bot.sendTextualMessage(chatId, "The command does not exist.");
                 break;
             case "OPENAI_SERVICE_DOWN":
-                console.log("openai wala error");
+                await bot.sendTextualMessage(chatId, "OpenAI API services temporarily down.");
                 break;
             case "TELEGRAM_SERVICE_DOWN":
-                console.log("telegram wala error");
+                await bot.sendTextualMessage(chatId, "Telegram Bot API services temporarily down.");
                 break;
             case "DESCRIPTION_INSUFFICIENT":
-                console.log("image description not sufficient");
+                await bot.sendTextualMessage(chatId, "Please elaborate the image you want to generate.");
                 break;
             case "EXCEEDED_IMG_GEN_LIMIT":
-                console.log("at max 10 images can be generated per query");
+                await bot.sendTextualMessage(chatId, "At max ten images can be generated per query.")
                 break;
             default:
-                console.log("internal server error");
+                await bot.sendTextualMessage(chatId, "We have experienced unknown internal error. Hephaestus will shortly be back in service.")
                 break;
         }
         res.send(e.message);
