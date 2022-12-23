@@ -1,7 +1,7 @@
 const express = require("express");
 const bot = require("./controllers/bot");
 
-app = express();
+const app = express();
 
 const PORT = 3000 || process.env.PORT;
 
@@ -17,15 +17,14 @@ app.get('/', (req, res) => {
 app.post('/receive', async (req, res) => {
     try {
         const chatId = req.body.message.chat.id;
-        const { text } = req.body.message
+        const { text } = req.body.message;
 
         const { data, type } = await bot.handleQuery(text);
         switch (type) {
             case 'image':
-                // Send images
+                console.log(data);
                 break;
             case 'text':
-                // Send text
                 await bot.sendTextualMessage(chatId, data);
                 break;
             default:
@@ -43,6 +42,12 @@ app.post('/receive', async (req, res) => {
                 break;
             case "TELEGRAM_SERVICE_DOWN":
                 console.log("telegram wala error");
+                break;
+            case "DESCRIPTION_INSUFFICIENT":
+                console.log("image description not sufficient");
+                break;
+            case "EXCEEDED_IMG_GEN_LIMIT":
+                console.log("at max 10 images can be generated per query");
                 break;
             default:
                 console.log("internal server error");

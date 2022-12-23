@@ -1,5 +1,4 @@
 const axios = require("axios");
-const { query } = require("express");
 const { Configuration, OpenAIApi} = require("openai");
 require("dotenv").config();
 
@@ -11,40 +10,46 @@ const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}
 
 const handleQuery = async (text) => {
     let response;
-    switch (text) {
-        case '/image':
-            // Call generateImageResponse
-            console.log("Generates images");
-            const urls = generateImageResponse(text);
-            response = {
-                data: urls,
-                type: 'image'
-            };
-            break;
-        case '/about':
-            // Return chatbot info
-            console.log("Chatbot info");
-            const about = "Hephaestus is a chatbot which internally uses Open AI's most advanced AI - ChatGPT and DALL-E.\nThis bot is an open source project (https://www.github.com/suyash-purwar/hephaestus) and contributions are always welcome. If you liked this bot, do give it a star on github! This project was started by Suyash Purwar (https://www.github.com/suyash-purwar).";
-            response = {
-                data: about,
-                type: 'text'
+
+    if (text.startsWith('/image')) {
+        // Call generateImageResponse
+        console.log("Generates images");
+        if (text.length < 10) throw new Error("DESCRIPTION_INSUFFICIENT");
+        const query = text.slice(7);
+        let imgCount = 1;
+        if (!isNaN(parseInt(text[text.length-1]))) {
+            if (!isNaN(parseInt(text[text.length-2]))) {
+                throw new Error("EXCEEDED_IMG_GEN_LIMIT");
+            } else {
+                imgCount = +text[text.length-1];
+                console.log(imgCount);
             }
-            break;
-        default:
-            if (text[0] === '/') throw new Error("COMMAND_DOES_NOT_EXIST");
-            // Call generateTextResponse
-            console.log("Textual response");
-            const textualResponse = await generateTextResponse(text);
-            console.log(text);
-            console.log(textualResponse);
-            response = {
-                data: textualResponse,
-                type: 'text'
-            }
-            break;
+        }
+        const urls = await generateImageResponse(query, imgCount);
+        response = {
+            data: urls,
+            type: 'image'
+        };
+    } else if (text.startsWith('/about')) {
+        // Return chatbot info
+        console.log("Chatbot info");
+        const about = "Hephaestus is a chatbot which internally uses Open AI's most advanced AI - ChatGPT and DALL-E.\nThis bot is an open source project (https://www.github.com/suyash-purwar/hephaestus) and contributions are always welcome. If you liked this bot, do give it a star on github! This project was started by Suyash Purwar (https://www.github.com/suyash-purwar).";
+        response = {
+            data: about,
+            type: 'text'
+        };
+    } else {
+        if (text[0] === '/') throw new Error("COMMAND_DOES_NOT_EXIST");
+        // Call generateTextResponse
+        console.log("Textual response");
+        const textualResponse = await generateTextResponse(text);
+        response = {
+            data: textualResponse,
+            type: 'text'
+        }
     }
     return response;
-}
+};
 
 const generateTextResponse = async (query) => {
     try {
@@ -64,9 +69,25 @@ const generateTextResponse = async (query) => {
     }
 };
 
-const generateImageResponse = async (query) => {
-    // Call DALL-E
-}
+const generateImageResponse = async (query, imgCount) => {
+    try {
+        const response = await openai.createImage({
+            prompt: query,
+            n: imgCount,
+            size: "512x512"
+        });
+        const urls = response.data.data.map(obj => obj.url);
+        console.log(urls);
+        return urls;
+    } catch (e) {
+        console.log(e);
+        switch(e.message) {
+            default:
+                console.log(e.message);
+                throw new Error("OPENAI_SERVICE_DOWN");
+        }
+    }
+};
 
 const sendTextualMessage = async (chatId, response) => {
     try {
