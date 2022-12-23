@@ -16,14 +16,39 @@ app.get('/', (req, res) => {
 
 app.post('/receive', async (req, res) => {
     try {
-        console.log(req.body);
-        const text = req.body.message.text;
         const chatId = req.body.message.chat.id;
-        const response = await bot.fetchResponse(text);
-        const status = await bot.sendMessage(chatId, response);
+        const { text } = req.body.message
+
+        const { data, type } = await bot.handleQuery(text);
+        switch (type) {
+            case 'image':
+                // Send images
+                break;
+            case 'text':
+                // Send text
+                await bot.sendTextualMessage(chatId, data);
+                break;
+            default:
+                throw new Error("INTERNAL_SERVER_ERROR");
+        }
         res.sendStatus(200);
     } catch (e) {
-        res.send(e);
+        switch (e.message) {
+            case "COMMAND_DOES_NOT_EXIST":
+                // Send message for command does not exist
+                console.log("Heda hai kya?");
+                break;
+            case "OPENAI_SERVICE_DOWN":
+                console.log("openai wala error");
+                break;
+            case "TELEGRAM_SERVICE_DOWN":
+                console.log("telegram wala error");
+                break;
+            default:
+                console.log("internal server error");
+                break;
+        }
+        res.send(e.message);
     }
 });
 
