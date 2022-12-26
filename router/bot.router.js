@@ -6,5 +6,8 @@ const router = Router();
 
 router.get('/ping', (req, res) => res.send('pong'));
 router.post('/process-msg', botController.processMsg);
+router.post('/set-webhook', botConfigurationController.setWebhook);
+router.post('/set-my-commands', botConfigurationController.setMyCommands);
+router.get('/get-my-commands', botConfigurationController.getMyCommands);
 
 module.exports = router;

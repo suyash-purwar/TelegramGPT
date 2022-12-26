@@ -1,4 +1,5 @@
 const botService = require('./../services/bot.service');
+const httpStatus = require('http-status');
 
 const processMsg = async (req, res) => {
   console.log(req.body);
@@ -7,7 +8,7 @@ const processMsg = async (req, res) => {
   try {
     if (!chatId || !text) throw new Error('ATTEMPT_TO_EDIT_MSG');
     await botService.processMsg(chatId, text);
-    res.sendStatus(200);
+    res.sendStatus(httpStatus.OK);
   } catch (e) {
     switch (e.message) {
       case 'COMMAND_DOES_NOT_EXIST':
