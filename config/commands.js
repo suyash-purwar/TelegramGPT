@@ -1,4 +1,4 @@
-module.exports = {
+const telegram_command = {
   commands: [
     {
       command: 'image',
@@ -11,6 +11,8 @@ module.exports = {
     {
       command: 'start',
       description: 'Starts the bot',
-    }
+    },
   ],
 };
+
+export default telegram_command;

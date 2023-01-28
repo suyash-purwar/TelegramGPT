@@ -1,5 +1,4 @@
-const { Configuration, OpenAIApi } = require('openai');
-require('dotenv').config();
+import { Configuration, OpenAIApi } from 'openai';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_SECRET_KEY,
@@ -7,7 +6,7 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-const generateTextResponse = async (query) => {
+export const generateTextResponse = async (query) => {
   try {
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
@@ -25,7 +24,7 @@ const generateTextResponse = async (query) => {
   }
 };
 
-const generateImageResponse = async (query, imgCount) => {
+export const generateImageResponse = async (query, imgCount) => {
   try {
     const response = await openai.createImage({
       prompt: query,
@@ -42,9 +41,4 @@ const generateImageResponse = async (query, imgCount) => {
         throw new Error('OPENAI_SERVICE_DOWN');
     }
   }
-};
-
-module.exports = {
-  generateTextResponse,
-  generateImageResponse,
 };

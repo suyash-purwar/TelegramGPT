@@ -1,7 +1,7 @@
-const openai = require('./../apis/openai.api');
-const telegram = require('./../apis/telegram.api');
+import * as openai from './../apis/openai.api.js';
+import * as telegram from './../apis/telegram.api.js';
 
-const processMsg = async (chatId, text) => {
+export const processMsg = async (chatId, text) => {
   const { type, data } = await routeQueryToProcess(text);
 
   switch (type) {
@@ -14,6 +14,10 @@ const processMsg = async (chatId, text) => {
     default:
       throw new Error('INTERNAL_SERVER_ERROR');
   }
+};
+
+export const sendMessage = async (chatId, text) => {
+  await telegram.sendTextualMessage(chatId, text);
 };
 
 const routeQueryToProcess = async (text) => {
@@ -67,13 +71,4 @@ const processAboutRequest = () => {
     type: 'text',
   };
   return response;
-};
-
-const sendMessage = async (chatId, text) => {
-  await telegram.sendTextualMessage(chatId, text);
-};
-
-module.exports = {
-  processMsg,
-  sendMessage,
 };

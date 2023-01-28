@@ -1,10 +1,9 @@
-const axios = require('axios');
-const commands = require('./../config/commands');
-require('dotenv').config();
+import axios from 'axios';
+import telegram_command from './../config/commands.js';
 
 const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
 
-const sendTextualMessage = async (chatId, response) => {
+export const sendTextualMessage = async (chatId, response) => {
   try {
     return await axios.post(TELEGRAM_API + '/sendMessage', {
       chat_id: chatId,
@@ -16,7 +15,7 @@ const sendTextualMessage = async (chatId, response) => {
   }
 };
 
-const sendImageMessage = async (chatId, response) => {
+export const sendImageMessage = async (chatId, response) => {
   try {
     response.forEach(async (url) => {
       await axios.post(TELEGRAM_API + '/sendPhoto', {
@@ -30,7 +29,7 @@ const sendImageMessage = async (chatId, response) => {
   }
 };
 
-const setWebhook = async (url) => {
+export const setWebhook = async (url) => {
   try {
     await axios.post(TELEGRAM_API + '/setWebhook', {
       url: url + '/api/v1/process-msg',
@@ -41,7 +40,7 @@ const setWebhook = async (url) => {
   }
 };
 
-const setMyCommands = async (commands) => {
+export const setMyCommands = async (commands) => {
   try {
     console.log(commands);
     await axios.post(TELEGRAM_API + '/setMyCommands', commands);
@@ -51,7 +50,7 @@ const setMyCommands = async (commands) => {
   }
 };
 
-const getMyCommands = async () => {
+export const getMyCommands = async () => {
   try {
     const response = await axios.get(TELEGRAM_API + '/getMyCommands');
     return response.data.result;
@@ -59,12 +58,4 @@ const getMyCommands = async () => {
     console.log(e.message);
     throw new Error('BOT_COMMANDS_NOT_FETCHED');
   }
-};
-
-module.exports = {
-  sendTextualMessage,
-  sendImageMessage,
-  setWebhook,
-  setMyCommands,
-  getMyCommands,
 };

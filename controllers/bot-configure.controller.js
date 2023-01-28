@@ -1,7 +1,7 @@
-const httpStatus = require('http-status');
-const telegram = require('./../apis/telegram.api');
+import httpStatus from 'http-status';
+import * as telegram from './../apis/telegram.api.js';
 
-const setWebhook = async (req, res) => {
+export const setWebhook = async (req, res) => {
   try {
     const { url } = req.body;
     await telegram.setWebhook(url);
@@ -13,7 +13,7 @@ const setWebhook = async (req, res) => {
   }
 };
 
-const setMyCommands = async (req, res) => {
+export const setMyCommands = async (req, res) => {
   try {
     const commands = req.body;
     await telegram.setMyCommands(commands);
@@ -25,7 +25,7 @@ const setMyCommands = async (req, res) => {
   }
 };
 
-const getMyCommands = async (req, res) => {
+export const getMyCommands = async (req, res) => {
   try {
     const response = await telegram.getMyCommands();
     res.send(response);
@@ -36,8 +36,8 @@ const getMyCommands = async (req, res) => {
   }
 };
 
-module.exports = {
-  setWebhook,
-  setMyCommands,
-  getMyCommands,
-};
+// module.exports = {
+//   setWebhook,
+//   setMyCommands,
+//   getMyCommands,
+// };

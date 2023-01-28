@@ -1,6 +1,6 @@
-const { Router } = require('express');
-const botController = require('./../controllers/bot.controller');
-const botConfigurationController = require('./../controllers/bot-configure.controller');
+import { Router } from 'express';
+import * as botController from './../controllers/bot.controller.js';
+import * as botConfigurationController from './../controllers/bot-configure.controller.js'; 
 
 const router = Router();
 
@@ -10,4 +10,4 @@ router.post('/set-webhook', botConfigurationController.setWebhook);
 router.post('/set-my-commands', botConfigurationController.setMyCommands);
 router.get('/get-my-commands', botConfigurationController.getMyCommands);
 
-module.exports = router;
+export default router;

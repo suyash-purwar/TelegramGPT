@@ -1,7 +1,7 @@
-const botService = require('./../services/bot.service');
-const httpStatus = require('http-status');
+import * as botService from './../services/bot.service.js';
+import httpStatus from 'http-status';
 
-const processMsg = async (req, res) => {
+export const processMsg = async (req, res) => {
   console.log(req.body);
   const chatId = req.body.message?.chat.id;
   const text = req.body.message?.text;
@@ -59,8 +59,4 @@ const processMsg = async (req, res) => {
     }
     res.send(e.message);
   }
-};
-
-module.exports = {
-  processMsg,
 };
