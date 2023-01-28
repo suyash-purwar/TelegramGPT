@@ -8,5 +8,9 @@ module.exports = {
       command: 'about',
       description: 'Describes about the bot',
     },
+    {
+      command: 'start',
+      description: 'Starts the bot',
+    }
   ],
 };

@@ -41,8 +41,9 @@ const setWebhook = async (url) => {
   }
 };
 
-const setMyCommands = async () => {
+const setMyCommands = async (commands) => {
   try {
+    console.log(commands);
     await axios.post(TELEGRAM_API + '/setMyCommands', commands);
   } catch (e) {
     console.log(e.message);

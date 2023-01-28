@@ -15,7 +15,8 @@ const setWebhook = async (req, res) => {
 
 const setMyCommands = async (req, res) => {
   try {
-    await telegram.setMyCommands();
+    const commands = req.body;
+    await telegram.setMyCommands(commands);
     res.sendStatus(httpStatus.OK);
   } catch (e) {
     res.status(httpStatus.FAILED_DEPENDENCY).send({
