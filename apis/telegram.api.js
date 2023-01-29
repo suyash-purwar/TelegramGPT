@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
-
 export const sendTextualMessage = async (chatId, response) => {
+  const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     return await axios.post(TELEGRAM_API + '/sendMessage', {
       chat_id: chatId,
@@ -15,6 +14,7 @@ export const sendTextualMessage = async (chatId, response) => {
 };
 
 export const sendImageMessage = async (chatId, response) => {
+  const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     response.forEach(async (url) => {
       await axios.post(TELEGRAM_API + '/sendPhoto', {

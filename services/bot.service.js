@@ -1,9 +1,9 @@
 import * as openai from './../apis/openai.api.js';
 import * as telegram from './../apis/telegram.api.js';
+import User from './../models/users.js';
 
 export const processMsg = async (chatId, text) => {
-  const { type, data } = await routeQueryToProcess(text);
-
+  const { type, data } = await routeQueryToProcess(chatId, text);
   switch (type) {
     case 'image':
       await telegram.sendImageMessage(chatId, data);
@@ -20,16 +20,32 @@ export const sendMessage = async (chatId, text) => {
   await telegram.sendTextualMessage(chatId, text);
 };
 
-const routeQueryToProcess = async (text) => {
+const routeQueryToProcess = async (chatId, text) => {
   let response;
   if (text.startsWith('/image')) {
     response = await processImageRequest(text);
   } else if (text.startsWith('/about')) {
     response = processAboutRequest();
+  } else if (text.startsWith('/start')) {
+    response = await processStartRequest(chatId);
   } else {
     response = await processTextRequest(text);
   }
   return response;
+};
+
+const processStartRequest = async (userId) => {
+  const user = await User.findOne({ telegram_id: userId }, 'is_active');
+  if (user?.is_active) throw new Error('BOT_ALREADY_STARTED');
+  const newUser = new User({
+    telegram_id: userId,
+  });
+  await newUser.save();
+  const MSG = 'Hephaestus Bot is now at your service. By default, you have a basic account with which you can send 15 text response type and 5 image type requests per day.\n\n You can be free of this limit by upgrading to premium account and it\'s completely free. Send /upgrade-account command to initiate the process.\n\n Send /help command to get a list of commands.'
+  return {
+    type: 'text',
+    data: MSG
+  }
 };
 
 const processImageRequest = async (text) => {
@@ -54,7 +70,6 @@ const processImageRequest = async (text) => {
 
 const processTextRequest = async (text) => {
   if (text[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
-  console.log('Textual response');
   const textualResponse = await openai.generateTextResponse(text);
   let response = {
     data: textualResponse,

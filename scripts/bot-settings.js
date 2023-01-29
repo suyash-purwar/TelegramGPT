@@ -38,4 +38,5 @@ const getMyCommands = async () => {
   }
 };
 
-await getMyCommands();
+// await getMyCommands();
+await setWebhook('https://402b-112-196-62-6.in.ngrok.io');

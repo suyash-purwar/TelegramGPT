@@ -2,7 +2,6 @@ import * as botService from './../services/bot.service.js';
 import httpStatus from 'http-status';
 
 export const processMsg = async (req, res) => {
-  console.log(req.body);
   const chatId = req.body.message?.chat.id;
   const text = req.body.message?.text;
   try {
@@ -45,6 +44,12 @@ export const processMsg = async (req, res) => {
         await botService.sendMessage(
           chatId,
           'At max ten images can be generated per query.'
+        );
+        break;
+      case 'BOT_ALREADY_STARTED':
+        await botService.sendMessage(
+          chatId,
+          'Hephaestus is already running.'
         );
         break;
       case 'INTERNAL_SERVER_ERROR':
