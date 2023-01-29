@@ -12,6 +12,10 @@ const telegram_command = {
       command: 'start',
       description: 'Starts the bot',
     },
+    {
+      command: 'off',
+      description: 'Shuts down the bot'
+    }
   ],
 };
 
