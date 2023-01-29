@@ -1,8 +1,7 @@
-const botService = require('./../services/bot.service');
-const httpStatus = require('http-status');
+import * as botService from './../services/bot.service.js';
+import httpStatus from 'http-status';
 
-const processMsg = async (req, res) => {
-  console.log(req.body);
+export const processMsg = async (req, res) => {
   const chatId = req.body.message?.chat.id;
   const text = req.body.message?.text;
   try {
@@ -47,6 +46,12 @@ const processMsg = async (req, res) => {
           'At max ten images can be generated per query.'
         );
         break;
+      case 'BOT_ALREADY_STARTED':
+        await botService.sendMessage(
+          chatId,
+          'Hephaestus is already running.'
+        );
+        break;
       case 'INTERNAL_SERVER_ERROR':
       default:
         console.log(e);
@@ -59,8 +64,4 @@ const processMsg = async (req, res) => {
     }
     res.send(e.message);
   }
-};
-
-module.exports = {
-  processMsg,
 };
