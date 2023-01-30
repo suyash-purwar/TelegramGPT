@@ -54,6 +54,24 @@ export const processMsg = async (req, res) => {
           'Hephaestus is already running.'
         );
         break;
+      case 'EXHAUSTED_BASIC_TIER_IMAGE_QUOTA':
+        await botService.sendMessage(
+          telegramId,
+          'You have a basic account which allows 5 image generations a day. You have exhausted your daily quota for image generation. Daily quota for image generation will be replenished at 12 in the night.\nUpgrade to premium for free by sending /upgrade command. It only takes 2 minutes!'
+        );
+        break;
+      case 'EXCEEDED_BASIC_TIER_IMG_GEN_LIMIT_BASIC_ACCOUNT':
+        await botService.sendMessage(
+          telegramId,
+          'You have a basic account which allows 1 image generation per query. Upgrade to premium account for free to generate upto 10 images per query. Send /upgrade command to upgrade your account to premium. It only takes 2 minutes!'
+        );
+        break;
+      case 'EXHAUSTED_BASIC_TIER_TEXT_QUOTA':
+        await botService.sendMessage(
+          telegramId,
+          'You have a basic account while allows 15 text generations a day. You have exhausted your daily quota for text generation. Daily quota for basic accounts will be replenished at 12 in the night.\nUpgrade to premium for free by sending /upgrade command. It only takes 2 minutes!'
+        );
+        break;
       case 'INTERNAL_SERVER_ERROR':
       default:
         console.log(e);
