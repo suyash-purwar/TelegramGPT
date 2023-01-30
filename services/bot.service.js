@@ -83,7 +83,6 @@ const imageCommand = async (telegramId, msg) => {
     basic_quota: basicQuota,
     account_type: accountType
   } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.image account_type');
-  // console.log(basicQuota.image, accountType);
   const isBasicAccount = (accountType === 'basic');
   if (isBasicAccount && basicQuota.image === 0) throw new Error('EXHAUSTED_BASIC_TIER_IMAGE_QUOTA')
   if (!isNaN(parseInt(msg[msg.length - 1]))) {
@@ -99,6 +98,18 @@ const imageCommand = async (telegramId, msg) => {
   if (isBasicAccount) {
     await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.image': basicQuota.image - 1 });
   }
+  await Analytics.findOneAndUpdate(
+    { telegram_id: telegramId },
+    { 
+      $push: {
+        records: {
+          sentAt: new Date(),
+          msg_type: 'image',
+          account_type: accountType
+        }
+      }
+    }
+  )
 };
 
 const aboutCommand = async (telegramId) => {
@@ -122,7 +133,8 @@ const textCommand = async (telegramId, msg) => {
   }
   await Analytics.findOneAndUpdate(
     { telegram_id: telegramId },
-    { $push: { 
+    { 
+      $push: { 
         records: {
           sentAt: new Date(),
           msg_type: 'text',
