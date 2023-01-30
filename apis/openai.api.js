@@ -1,13 +1,11 @@
 import { Configuration, OpenAIApi } from 'openai';
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_SECRET_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
 export const generateTextResponse = async (query) => {
   try {
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_SECRET_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
       prompt: query,
@@ -26,6 +24,10 @@ export const generateTextResponse = async (query) => {
 
 export const generateImageResponse = async (query, imgCount) => {
   try {
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_SECRET_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
     const response = await openai.createImage({
       prompt: query,
       n: imgCount,

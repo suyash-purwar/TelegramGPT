@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-export const sendTextualMessage = async (chatId, response) => {
+export const sendTextualMessage = async (telegramId, message) => {
   const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     return await axios.post(TELEGRAM_API + '/sendMessage', {
-      chat_id: chatId,
-      text: response,
+      chat_id: telegramId,
+      text: message,
     });
   } catch (e) {
     console.log(e.message);
@@ -13,12 +13,12 @@ export const sendTextualMessage = async (chatId, response) => {
   }
 };
 
-export const sendImageMessage = async (chatId, response) => {
+export const sendImageMessage = async (telegramId, message) => {
   const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
-    response.forEach(async (url) => {
+    message.forEach(async (url) => {
       await axios.post(TELEGRAM_API + '/sendPhoto', {
-        chat_id: chatId,
+        chat_id: telegramId,
         photo: url,
       });
     });

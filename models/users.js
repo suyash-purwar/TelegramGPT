@@ -32,6 +32,9 @@ const Users = mongoose.model('Users', new mongoose.Schema({
   },
   account_type_update_time: {
     type: Date
+  },
+  account_deactivation_time: {
+    type: Date
   }
 }, {
   versionKey: false,
