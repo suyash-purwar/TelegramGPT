@@ -70,6 +70,13 @@ const imageCommand = async (telegramId, msg) => {
   if (msg.length < 10) throw new Error('DESCRIPTION_INSUFFICIENT');
   const query = msg.slice(7);
   let imgCount = 1;
+  const { 
+    basic_quota: basicQuota,
+    account_type: accountType
+  } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.image account_type');
+  // console.log(basicQuota.image, accountType);
+  const isBasicAccount = (accountType === 'basic');
+  if (isBasicAccount && basicQuota.image === 0) throw new Error('EXHAUSTED_BASIC_TIER_IMAGE_QUOTA')
   if (!isNaN(parseInt(msg[msg.length - 1]))) {
     if (!isNaN(parseInt(msg[msg.length - 2]))) {
       throw new Error('EXCEEDED_IMG_GEN_LIMIT');
@@ -77,8 +84,12 @@ const imageCommand = async (telegramId, msg) => {
       imgCount = +msg[msg.length - 1];
     }
   }
+  if (isBasicAccount && imgCount > 1) throw new Error('EXCEEDED_BASIC_TIER_IMG_GEN_LIMIT'); 
   const urls = await openai.generateImageResponse(query, imgCount);
   await telegram.sendImageMessage(telegramId, urls);
+  if (isBasicAccount) {
+    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.image': basicQuota.image - 1 });
+  }
 };
 
 const aboutCommand = async (telegramId) => {
@@ -87,8 +98,17 @@ const aboutCommand = async (telegramId) => {
   await telegram.sendTextualMessage(telegramId, msg_response);
 };
 
-const textCommand = async (telegramId, text) => {
-  if (text[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
-  const msg_response = await openai.generateTextResponse(text);
+const textCommand = async (telegramId, msg) => {
+  if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
+  const { 
+    basic_quota: basicQuota,
+    account_type: accountType
+  } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.text account_type');
+  const isBasicAccount = (accountType === 'basic');
+  if (isBasicAccount && basicQuota.text === 0) throw new Error('EXHAUSTED_BASIC_TIER_TEXT_QUOTA');
+  const msg_response = await openai.generateTextResponse(msg);
   await telegram.sendTextualMessage(telegramId, msg_response);
+  if (isBasicAccount) {
+    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.text': basicQuota.text - 1 });
+  }
 };
