@@ -12,11 +12,15 @@ export const generateTextResponse = async (query) => {
       max_tokens: 50,
       temperature: 0,
     });
-    return response.data.choices[0].text;
+    return {
+      msg_response: response.data.choices[0].text,
+      token_usage: response.data.usage.total_tokens
+    };
   } catch (e) {
     switch (e.message) {
       default:
         console.log(e.message);
+        console.log(e);
         throw new Error('OPENAI_SERVICE_DOWN');
     }
   }
@@ -40,6 +44,7 @@ export const generateImageResponse = async (query, imgCount) => {
     switch (e.message) {
       default:
         console.log(e.message);
+        console.log(e);
         throw new Error('OPENAI_SERVICE_DOWN');
     }
   }

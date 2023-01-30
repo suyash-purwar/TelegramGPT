@@ -1,6 +1,7 @@
 import * as openai from './../apis/openai.api.js';
 import * as telegram from './../apis/telegram.api.js';
 import User from './../models/users.js';
+import Analytics from '../models/analytics.js';
 
 export const processMsg = async (telegramId, msg) => {
   if (msg.startsWith('/start')) {
@@ -45,8 +46,16 @@ const startCommand = async (telegramId) => {
     await User.findOneAndUpdate({ telegram_id: telegramId }, { $set: updatedData });
     msg_response = 'Hephaestus is back to your service! 🔥😄';
   } else {
-    const newUser = new User({ telegram_id });
+    const newUser = new User({ telegram_id: telegramId });
     await newUser.save();
+    const newAnalytics = new Analytics({
+      telegram_id: telegramId,
+      records: [{
+        sentAt: new Date(),
+        msg_type: 'text'
+      }]
+    });
+    await newAnalytics.save();
     msg_response = 'Hephaestus Bot is now at your service. By default, you have a basic account with which you can send 15 text response type and 5 image type requests per day.\n\nYou can be free of this limit by upgrading to premium account and it\'s completely free. Send /upgrade-account command to initiate the process.\n\nSend /help command to get a list of commands.'
   }
   await telegram.sendTextualMessage(telegramId, msg_response);
@@ -106,9 +115,21 @@ const textCommand = async (telegramId, msg) => {
   } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.text account_type');
   const isBasicAccount = (accountType === 'basic');
   if (isBasicAccount && basicQuota.text === 0) throw new Error('EXHAUSTED_BASIC_TIER_TEXT_QUOTA');
-  const msg_response = await openai.generateTextResponse(msg);
+  const { msg_response, token_usage } = await openai.generateTextResponse(msg);
   await telegram.sendTextualMessage(telegramId, msg_response);
   if (isBasicAccount) {
     await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.text': basicQuota.text - 1 });
   }
+  await Analytics.findOneAndUpdate(
+    { telegram_id: telegramId },
+    { $push: { 
+        records: {
+          sentAt: new Date(),
+          msg_type: 'text',
+          api_tokens_used:  token_usage,
+          account_type: accountType
+        }
+      }
+    }
+  );
 };
