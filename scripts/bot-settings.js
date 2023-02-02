@@ -6,6 +6,8 @@ dotenv.config({ path: '.env.dev' });
 
 const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
 
+const args = process.argv.slice(2);
+
 const setWebhook = async (url) => {
   try {
     const res = await axios.post(TELEGRAM_API + '/setWebhook', {
@@ -31,15 +33,23 @@ const setMyCommands = async () => {
 const getMyCommands = async () => {
   try {
     const res = await axios.get(TELEGRAM_API + '/getMyCommands');
-    console.log(res.data.result);
+    console.log(res);
   } catch (e) {
     console.log(e.message);
     console.log(e);
   }
 };
 
-let url = '';
-
-// await getMyCommands();
-await setWebhook(url);
-// await setMyCommands();
+switch (args[0]) {
+  case 'set-webhook':
+    setWebhook(args[1]);
+    break;
+  case 'get-commands':
+    getMyCommands();
+    break;
+  case 'set-commands':
+    setMyCommands();
+    break;
+  default:
+    console.log('Invalid operation');
+}
