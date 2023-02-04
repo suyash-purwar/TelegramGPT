@@ -2,6 +2,7 @@ import * as openai from './../apis/openai.api.js';
 import * as telegram from './../apis/telegram.api.js';
 import User from './../models/users.js';
 import Analytics from '../models/analytics.js';
+import SecureToken from '../utils/secure-token.js';
 
 export const processMsg = async (telegramId, messageId, msg, userInfo) => {
   console.log(userInfo, messageId);
@@ -89,18 +90,19 @@ const updateCommand = async (telegramId, messageId, msg) => {
   if (!token) throw new Error('EMPTY_TOKEN');
   const isValid = await openai.verifyToken(token);
   if (!isValid) throw new Error('INVALID_TOKEN');
-  // Encrypt the token
+  const encryptedToken = SecureToken.encryptToken(token);
   await User.findOneAndUpdate(
     { telegram_id: telegramId },
     {
       $set: {
         account_type: 'premium',
         account_type_update_time: new Date(),
-        openai_api_token: token
+        openai_api_token: encryptedToken
       }
     }
   );
-  await telegram.sendTextualMessage(telegramId, 'Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄')
+  let msg_response = 'Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄';
+  await telegram.sendTextualMessage(telegramId, msg_response);
   await telegram.deleteMessage(telegramId, messageId);
 }
 
@@ -108,7 +110,9 @@ const textCommand = async (telegramId, msg, userInfo) => {
   if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
   const isBasicAccount = (userInfo.accountType === 'basic');
   if (isBasicAccount && userInfo.textQuota === 0) throw new Error('EXHAUSTED_BASIC_TIER_TEXT_QUOTA');
-  const openaiToken = userInfo.apiToken || process.env.OPENAI_SECRET_KEY;
+  const openaiToken = userInfo.apiToken ?
+    SecureToken.decryptToken(userInfo.apiToken) :
+    process.env.OPENAI_SECRET_KEY;
   const { msg_response, token_usage } = await openai.generateTextResponse(openaiToken, msg);
   await telegram.sendTextualMessage(telegramId, msg_response);
   if (isBasicAccount) {
@@ -121,7 +125,7 @@ const textCommand = async (telegramId, msg, userInfo) => {
         records: {
           sentAt: new Date(),
           msg_type: 'text',
-          api_tokens_used:  token_usage,
+          api_tokens_used: token_usage,
           account_type: userInfo.accountType
         }
       }
@@ -143,7 +147,9 @@ const imageCommand = async (telegramId, msg, userInfo) => {
     }
   }
   if (isBasicAccount && imgCount > 1) throw new Error('EXCEEDED_BASIC_TIER_IMG_GEN_LIMIT'); 
-  const openaiToken = userInfo.apiToken || process.env.OPENAI_SECRET_KEY;
+  const openaiToken = userInfo.apiToken ?
+    SecureToken.decryptToken(userInfo.apiToken) :
+    process.env.OPENAI_SECRET_KEY;
   const urls = await openai.generateImageResponse(openaiToken, query, imgCount);
   await telegram.sendImageMessage(telegramId, urls);
   if (isBasicAccount) {
@@ -160,5 +166,5 @@ const imageCommand = async (telegramId, msg, userInfo) => {
         }
       }
     }
-  )
+  );
 };
