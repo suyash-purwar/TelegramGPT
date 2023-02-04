@@ -15,11 +15,17 @@ export default async function authenticate(req, res, next) {
   if (msg.startsWith('/start')) return next();
   // If the msg != '/start', check if user exists
   // If yes, call next(), otherwise, block
-  const user = await User.findOne({ telegram_id: telegramId });
+  const user = await User.findOne({ telegram_id: telegramId }, 'is_active account_type basic_quota openai_api_token');
   if (!user?.is_active) {
     botService.sendMessage(telegramId, 'Hephaestus is not active right now. Send /start command to activate.')
     res.sendStatus(httpStatus.OK);
     return;
+  }
+  req.userInfo = {
+    accountType: user.account_type,
+    textQuota: user.basic_quota.text,
+    imageQuota: user.basic_quota.image,
+    apiToken: (user.account_type === 'basic') ? undefined : user.openai_api_token
   }
   return next();
 }

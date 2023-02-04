@@ -1,10 +1,27 @@
 import { Configuration, OpenAIApi } from 'openai';
 
-export const generateTextResponse = async (query) => {
+export const verifyToken = async (token) => {
   try {
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_SECRET_KEY,
     });
+    const openai = new OpenAIApi(configuration);
+    const response = await openai.listModels();
+    console.log(response);
+    return true;
+  } catch (e) {
+    switch (e.message) {
+      default:
+        console.log(e.message);
+        console.log(e);
+        throw new Error('OPENAI_SERVICE_DOWN');
+    }
+  }
+}
+
+export const generateTextResponse = async (apiKey, query) => {
+  try {
+    const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
@@ -26,11 +43,9 @@ export const generateTextResponse = async (query) => {
   }
 };
 
-export const generateImageResponse = async (query, imgCount) => {
+export const generateImageResponse = async (apiKey, query, imgCount) => {
   try {
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_SECRET_KEY,
-    });
+    const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
     const response = await openai.createImage({
       prompt: query,

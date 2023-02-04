@@ -4,11 +4,12 @@ import httpStatus from 'http-status';
 export const processMsg = async (req, res) => {
   const telegramId = req.body.message?.chat.id;
   const msg = req.body.message?.text;
+  const { userInfo } = req;
   try {
     // If telegramId or text does not exist, it implies that
     // user has made the request to edit an old message
     if (!telegramId || !msg) throw new Error('ATTEMPT_TO_EDIT_MSG');
-    await botService.processMsg(telegramId, msg);
+    await botService.processMsg(telegramId, msg, userInfo);
     res.sendStatus(httpStatus.OK);
   } catch (e) {
     switch (e.message) {

@@ -3,17 +3,20 @@ import * as telegram from './../apis/telegram.api.js';
 import User from './../models/users.js';
 import Analytics from '../models/analytics.js';
 
-export const processMsg = async (telegramId, msg) => {
+export const processMsg = async (telegramId, msg, userInfo) => {
+  console.log(userInfo);
   if (msg.startsWith('/start')) {
     await startCommand(telegramId);
   } else if (msg.startsWith('/off')) {
     await offCommand(telegramId);
-  } else if (msg.startsWith('/image')) {
-    await imageCommand(telegramId, msg);
   } else if (msg.startsWith('/about')) {
     await aboutCommand(telegramId);
+  } else if (msg.startsWith('/update')) {
+    await updateCommand(telegramId, msg);
+  } else if (msg.startsWith('/image')) {
+    await imageCommand(telegramId, msg, userInfo);
   } else {
-    await textCommand(telegramId, msg);
+    await textCommand(telegramId, msg, userInfo);
   }
 };
 
@@ -75,61 +78,41 @@ const offCommand = async (telegramId) => {
   await telegram.sendTextualMessage(telegramId, msg_response);
 }
 
-const imageCommand = async (telegramId, msg) => {
-  if (msg.length < 10) throw new Error('DESCRIPTION_INSUFFICIENT');
-  const query = msg.slice(7);
-  let imgCount = 1;
-  const { 
-    basic_quota: basicQuota,
-    account_type: accountType
-  } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.image account_type');
-  const isBasicAccount = (accountType === 'basic');
-  if (isBasicAccount && basicQuota.image === 0) throw new Error('EXHAUSTED_BASIC_TIER_IMAGE_QUOTA')
-  if (!isNaN(parseInt(msg[msg.length - 1]))) {
-    if (!isNaN(parseInt(msg[msg.length - 2]))) {
-      throw new Error('EXCEEDED_IMG_GEN_LIMIT');
-    } else {
-      imgCount = +msg[msg.length - 1];
-    }
-  }
-  if (isBasicAccount && imgCount > 1) throw new Error('EXCEEDED_BASIC_TIER_IMG_GEN_LIMIT'); 
-  const urls = await openai.generateImageResponse(query, imgCount);
-  await telegram.sendImageMessage(telegramId, urls);
-  if (isBasicAccount) {
-    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.image': basicQuota.image - 1 });
-  }
-  await Analytics.findOneAndUpdate(
-    { telegram_id: telegramId },
-    { 
-      $push: {
-        records: {
-          sentAt: new Date(),
-          msg_type: 'image',
-          account_type: accountType
-        }
-      }
-    }
-  )
-};
-
 const aboutCommand = async (telegramId) => {
   const msg_response =
     "Hephaestus is a chatbot which internally uses Open AI's most advanced AI - ChatGPT and DALL-E.\nThis bot is an open source project (https://www.github.com/suyash-purwar/hephaestus) and contributions are always welcome. If you liked this bot, do give it a star on github! This project was started by Suyash Purwar (https://www.github.com/suyash-purwar).";
   await telegram.sendTextualMessage(telegramId, msg_response);
 };
 
-const textCommand = async (telegramId, msg) => {
+const updateCommand = async (telegramId, msg) => {
+  const token = msg.split(' ')[1];
+  if (!token) throw new Error('EMPTY_TOKEN');
+  const isValid = await openai.verifyToken(token);
+  if (!isValid) throw new Error('INVALID_TOKEN');
+  // Encrypt the token
+  // Hide the token message on client
+  await User.findOneAndUpdate(
+    { telegram_id: telegramId },
+    {
+      $et: {
+        account_type: 'premium',
+        account_type_update_time: new Date(),
+        openai_api_token: token
+      }
+    }
+  );
+  await telegram.sendTextualMessage('Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄')
+}
+
+const textCommand = async (telegramId, msg, userInfo) => {
   if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
-  const { 
-    basic_quota: basicQuota,
-    account_type: accountType
-  } = await User.findOne({ telegram_id: telegramId }, 'basic_quota.text account_type');
-  const isBasicAccount = (accountType === 'basic');
-  if (isBasicAccount && basicQuota.text === 0) throw new Error('EXHAUSTED_BASIC_TIER_TEXT_QUOTA');
-  const { msg_response, token_usage } = await openai.generateTextResponse(msg);
+  const isBasicAccount = (userInfo.accountType === 'basic');
+  if (isBasicAccount && userInfo.textQuota === 0) throw new Error('EXHAUSTED_BASIC_TIER_TEXT_QUOTA');
+  const openaiToken = userInfo.apiToken || process.env.OPENAI_SECRET_KEY;
+  const { msg_response, token_usage } = await openai.generateTextResponse(openaiToken, msg);
   await telegram.sendTextualMessage(telegramId, msg_response);
   if (isBasicAccount) {
-    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.text': basicQuota.text - 1 });
+    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.text': userInfo.textQuota - 1 });
   }
   await Analytics.findOneAndUpdate(
     { telegram_id: telegramId },
@@ -139,9 +122,43 @@ const textCommand = async (telegramId, msg) => {
           sentAt: new Date(),
           msg_type: 'text',
           api_tokens_used:  token_usage,
-          account_type: accountType
+          account_type: userInfo.accountType
         }
       }
     }
   );
+};
+
+const imageCommand = async (telegramId, msg, userInfo) => {
+  if (msg.length < 10) throw new Error('DESCRIPTION_INSUFFICIENT');
+  const query = msg.slice(7);
+  let imgCount = 1;
+  const isBasicAccount = (userInfo.accountType === 'basic');
+  if (isBasicAccount && userInfo.imageQuota === 0) throw new Error('EXHAUSTED_BASIC_TIER_IMAGE_QUOTA')
+  if (!isNaN(parseInt(msg[msg.length - 1]))) {
+    if (!isNaN(parseInt(msg[msg.length - 2]))) {
+      throw new Error('EXCEEDED_IMG_GEN_LIMIT');
+    } else {
+      imgCount = +msg[msg.length - 1];
+    }
+  }
+  if (isBasicAccount && imgCount > 1) throw new Error('EXCEEDED_BASIC_TIER_IMG_GEN_LIMIT'); 
+  const openaiToken = userInfo.apiToken || process.env.OPENAI_SECRET_KEY;
+  const urls = await openai.generateImageResponse(openaiToken, query, imgCount);
+  await telegram.sendImageMessage(telegramId, urls);
+  if (isBasicAccount) {
+    await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.image': userInfo.imageQuota - 1 });
+  }
+  await Analytics.findOneAndUpdate(
+    { telegram_id: telegramId },
+    { 
+      $push: {
+        records: {
+          sentAt: new Date(),
+          msg_type: 'image',
+          account_type: userInfo.accountType
+        }
+      }
+    }
+  )
 };
