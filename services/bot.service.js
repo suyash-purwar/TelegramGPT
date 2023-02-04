@@ -12,8 +12,10 @@ export const processMsg = async (telegramId, messageId, msg, userInfo) => {
     await offCommand(telegramId);
   } else if (msg.startsWith('/about')) {
     await aboutCommand(telegramId);
-  } else if (msg.startsWith('/update')) {
-    await updateCommand(telegramId, messageId, msg);
+  } else if (msg.startsWith('/howtoupgrade')) {
+    await howToUpgradeCommand(telegramId);    
+  } else if (msg.startsWith('/upgrade')) {
+    await upgradeCommand(telegramId, messageId, msg);
   } else if (msg.startsWith('/image')) {
     await imageCommand(telegramId, msg, userInfo);
   } else {
@@ -32,24 +34,32 @@ const startCommand = async (telegramId) => {
   if (user?.is_active) throw new Error('BOT_ALREADY_STARTED'); 
   // If user's row exists and is_active = false
   if (user && !user?.is_active) {
-    // Calculate the no. of days between the last time bot was activated and current time
-    // account_activation_time holds the last time account was activated 
-    // If no. of days > 1, refill the basic tier quota
-    const isItAnotherDay = ((new Date() - new Date(user.account_deactivation_time)) / 86400000);
+    // Check if the user is activating the bot on the same day of deactivation or not.
+    // If yes, do not restore the basic quota
+    // If no, restore the basic quota
+
+    const lastDeactivationTime = new Date(user.account_deactivation_time);
+    const currentTime = new Date();
+
     const updatedData = {
       is_active: true,
     }
-    if (isItAnotherDay >= 1.0) {
-      console.log(isItAnotherDay);
+
+    if (
+      currentTime.getFullYear() > lastDeactivationTime.getFullYear() ||
+      currentTime.getMonth() > lastDeactivationTime.getMonth() ||
+      currentTime.getDay() > lastDeactivationTime.getDay()
+    ) {
       updatedData.basic_quota = {
         text: 15,
         image: 5
       }
-      updatedData.account_activation_time = new Date();
     }
+
     await User.findOneAndUpdate({ telegram_id: telegramId }, { $set: updatedData });
     msg_response = 'Hephaestus is back to your service! 🔥😄';
   } else {
+    // When user does not exist
     const newUser = new User({ telegram_id: telegramId });
     await newUser.save();
     const newAnalytics = new Analytics({
@@ -77,7 +87,7 @@ const offCommand = async (telegramId) => {
     }
   );
   await telegram.sendTextualMessage(telegramId, msg_response);
-}
+};
 
 const aboutCommand = async (telegramId) => {
   const msg_response =
@@ -85,7 +95,19 @@ const aboutCommand = async (telegramId) => {
   await telegram.sendTextualMessage(telegramId, msg_response);
 };
 
-const updateCommand = async (telegramId, messageId, msg) => {
+const howToUpgradeCommand = async (telegramId) => {
+  const msg_response = `
+1. Create your account on OpenAI by registering yourself here https://platform.openai.com/signup
+2. Go onto https://platform.openai.com/account/api-keys
+3. Click on 'Generate new secret key' and copy the generated secret key.
+4. Send a message to us in this format 👉 /upgrade [secret key here]
+
+Note: To maintain privacy of your secret key, we encrypt the secret key before storing in our database.
+  `;
+  await telegram.sendTextualMessage(telegramId, msg_response);
+}
+
+const upgradeCommand = async (telegramId, messageId, msg) => {
   const token = msg.split(' ')[1];
   if (!token) throw new Error('EMPTY_TOKEN');
   const isValid = await openai.verifyToken(token);
@@ -96,7 +118,7 @@ const updateCommand = async (telegramId, messageId, msg) => {
     {
       $set: {
         account_type: 'premium',
-        account_type_update_time: new Date(),
+        account_upgrade_time: new Date(),
         openai_api_token: encryptedToken
       }
     }
@@ -104,7 +126,7 @@ const updateCommand = async (telegramId, messageId, msg) => {
   let msg_response = 'Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄';
   await telegram.sendTextualMessage(telegramId, msg_response);
   await telegram.deleteMessage(telegramId, messageId);
-}
+};
 
 const textCommand = async (telegramId, msg, userInfo) => {
   if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');

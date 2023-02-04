@@ -73,13 +73,13 @@ export const processMsg = async (req, res) => {
       case 'EMPTY_TOKEN':
         await botService.sendMessage(
           telegramId,
-          'I think you forgot to type the openai token. Please try again.'
+          'I think you forgot to type the openai secret key. Please try again.'
         );
         break;
       case 'INVALID_TOKEN':
         await botService.sendMessage(
           telegramId,
-          'Uh oh! The token you passed is invalid. Make sure you\'re passing the correct token.'
+          'Uh oh! The secret key you passed is invalid. Make sure you\'re passing the correct token.'
         );
         break;
       case 'INTERNAL_SERVER_ERROR':

@@ -2,11 +2,11 @@ const telegram_command = {
   commands: [
     {
       command: 'image',
-      description: 'Generates image on the basis of description provided'
+      description: 'Generates images'
     },
     {
       command: 'about',
-      description: 'Describes about the bot',
+      description: 'Shows info about the bot',
     },
     {
       command: 'start',
@@ -17,12 +17,12 @@ const telegram_command = {
       description: 'Shuts down the bot'
     },
     {
-      command: 'how_to_update',
-      description: 'Describes the account upgrade procedure'
+      command: 'howtoupgrade',
+      description: 'Steps to upgrade to premium'
     },
     {
-      command: 'update',
-      description: 'Initiates the process of account upgrade'
+      command: 'upgrade',
+      description: 'Upgrades to premium account'
     }
   ]
 };

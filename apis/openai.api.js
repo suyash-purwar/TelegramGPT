@@ -15,7 +15,7 @@ export const verifyToken = async (apiKey) => {
         throw new Error('OPENAI_SERVICE_DOWN');
     }
   }
-}
+};
 
 export const generateTextResponse = async (apiKey, query) => {
   try {

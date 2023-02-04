@@ -39,4 +39,4 @@ export const deleteMessage = async (telegramId, messageId) => {
     console.log(e);
     throw new Error('TELEGRAM_SERVICE_DOWN');
   }
-}
+};
