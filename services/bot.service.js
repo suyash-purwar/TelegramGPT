@@ -3,8 +3,8 @@ import * as telegram from './../apis/telegram.api.js';
 import User from './../models/users.js';
 import Analytics from '../models/analytics.js';
 
-export const processMsg = async (telegramId, msg, userInfo) => {
-  console.log(userInfo);
+export const processMsg = async (telegramId, messageId, msg, userInfo) => {
+  console.log(userInfo, messageId);
   if (msg.startsWith('/start')) {
     await startCommand(telegramId);
   } else if (msg.startsWith('/off')) {
@@ -12,7 +12,7 @@ export const processMsg = async (telegramId, msg, userInfo) => {
   } else if (msg.startsWith('/about')) {
     await aboutCommand(telegramId);
   } else if (msg.startsWith('/update')) {
-    await updateCommand(telegramId, msg);
+    await updateCommand(telegramId, messageId, msg);
   } else if (msg.startsWith('/image')) {
     await imageCommand(telegramId, msg, userInfo);
   } else {
@@ -84,24 +84,24 @@ const aboutCommand = async (telegramId) => {
   await telegram.sendTextualMessage(telegramId, msg_response);
 };
 
-const updateCommand = async (telegramId, msg) => {
+const updateCommand = async (telegramId, messageId, msg) => {
   const token = msg.split(' ')[1];
   if (!token) throw new Error('EMPTY_TOKEN');
   const isValid = await openai.verifyToken(token);
   if (!isValid) throw new Error('INVALID_TOKEN');
   // Encrypt the token
-  // Hide the token message on client
   await User.findOneAndUpdate(
     { telegram_id: telegramId },
     {
-      $et: {
+      $set: {
         account_type: 'premium',
         account_type_update_time: new Date(),
         openai_api_token: token
       }
     }
   );
-  await telegram.sendTextualMessage('Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄')
+  await telegram.sendTextualMessage(telegramId, 'Hurrayyy! 🎊\nYou\'re a premium user now. Hephaestus is at your service indefinitely. 😄')
+  await telegram.deleteMessage(telegramId, messageId);
 }
 
 const textCommand = async (telegramId, msg, userInfo) => {

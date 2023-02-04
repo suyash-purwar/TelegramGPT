@@ -27,3 +27,16 @@ export const sendImageMessage = async (telegramId, message) => {
     throw new Error('TELEGRAM_SERVICE_DOWN');
   }
 };
+
+export const deleteMessage = async (telegramId, messageId) => {
+  const TELEGRAM_API = `https://api.telegram.org/${process.env.TELEGRAM_BOT_TOKEN}`;
+  try {
+    return await axios.post(TELEGRAM_API + '/deleteMessage', {
+      chat_id: telegramId,
+      message_id: messageId
+    });
+  } catch (e) {
+    console.log(e);
+    throw new Error('TELEGRAM_SERVICE_DOWN');
+  }
+}

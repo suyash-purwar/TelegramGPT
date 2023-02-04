@@ -1,18 +1,16 @@
 import { Configuration, OpenAIApi } from 'openai';
 
-export const verifyToken = async (token) => {
+export const verifyToken = async (apiKey) => {
   try {
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_SECRET_KEY,
-    });
+    const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
-    const response = await openai.listModels();
-    console.log(response);
+    await openai.listModels();
     return true;
   } catch (e) {
-    switch (e.message) {
+    switch (e.response.status) {
+      case 401:
+        return false;
       default:
-        console.log(e.message);
         console.log(e);
         throw new Error('OPENAI_SERVICE_DOWN');
     }

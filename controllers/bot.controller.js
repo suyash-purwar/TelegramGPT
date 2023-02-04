@@ -2,14 +2,11 @@ import * as botService from './../services/bot.service.js';
 import httpStatus from 'http-status';
 
 export const processMsg = async (req, res) => {
-  const telegramId = req.body.message?.chat.id;
-  const msg = req.body.message?.text;
+  const telegramId = req.body.message.chat.id;
+  const { text: msg, message_id: messageId } = req.body.message;
   const { userInfo } = req;
   try {
-    // If telegramId or text does not exist, it implies that
-    // user has made the request to edit an old message
-    if (!telegramId || !msg) throw new Error('ATTEMPT_TO_EDIT_MSG');
-    await botService.processMsg(telegramId, msg, userInfo);
+    await botService.processMsg(telegramId, messageId, msg, userInfo);
     res.sendStatus(httpStatus.OK);
   } catch (e) {
     switch (e.message) {
@@ -71,6 +68,18 @@ export const processMsg = async (req, res) => {
         await botService.sendMessage(
           telegramId,
           'You have a basic account while allows 15 text generations a day. You have exhausted your daily quota for text generation. Daily quota for basic accounts will be replenished at 12 in the night.\nUpgrade to premium for free by sending /upgrade command. It only takes 2 minutes!'
+        );
+        break;
+      case 'EMPTY_TOKEN':
+        await botService.sendMessage(
+          telegramId,
+          'I think you forgot to type the openai token. Please try again.'
+        );
+        break;
+      case 'INVALID_TOKEN':
+        await botService.sendMessage(
+          telegramId,
+          'Uh oh! The token you passed is invalid. Make sure you\'re passing the correct token.'
         );
         break;
       case 'INTERNAL_SERVER_ERROR':
