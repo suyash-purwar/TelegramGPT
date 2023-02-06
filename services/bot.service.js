@@ -16,6 +16,10 @@ export const processMsg = async (telegramId, messageId, msg, userInfo) => {
     await howToUpgradeCommand(telegramId);    
   } else if (msg.startsWith('/upgrade')) {
     await upgradeCommand(telegramId, messageId, msg);
+  } else if (msg.startsWith('/switchtobasic')) {
+    await switchToBasicCommand(telegramId);
+  } else if (msg.startsWith('/switchtopremium')) {
+    await switchToPremiumCommand(telegramId);
   } else if (msg.startsWith('/image')) {
     await imageCommand(telegramId, msg, userInfo);
   } else {
@@ -37,22 +41,22 @@ const startCommand = async (telegramId) => {
     // Check if the user is activating the bot on the same day of deactivation or not.
     // If yes, do not restore the basic quota
     // If no, restore the basic quota
-
-    const lastDeactivationTime = new Date(user.account_deactivation_time);
-    const currentTime = new Date();
-
     const updatedData = {
       is_active: true,
     }
 
-    if (
-      currentTime.getFullYear() > lastDeactivationTime.getFullYear() ||
-      currentTime.getMonth() > lastDeactivationTime.getMonth() ||
-      currentTime.getDay() > lastDeactivationTime.getDay()
-    ) {
-      updatedData.basic_quota = {
-        text: 15,
-        image: 5
+    if (user.account_deactivation_time) {
+      const lastDeactivationTime = new Date(user.account_deactivation_time);
+      const currentTime = new Date();
+      if (
+        currentTime.getFullYear() > lastDeactivationTime.getFullYear() ||
+        currentTime.getMonth() > lastDeactivationTime.getMonth() ||
+        currentTime.getDay() > lastDeactivationTime.getDay()
+      ) {
+        updatedData.basic_quota = {
+          text: 15,
+          image: 5
+        }
       }
     }
 
@@ -105,7 +109,7 @@ const howToUpgradeCommand = async (telegramId) => {
 Note: To maintain privacy of your secret key, we encrypt the secret key before storing in our database.
   `;
   await telegram.sendTextualMessage(telegramId, msg_response);
-}
+};
 
 const upgradeCommand = async (telegramId, messageId, msg) => {
   const token = msg.split(' ')[1];
@@ -118,7 +122,6 @@ const upgradeCommand = async (telegramId, messageId, msg) => {
     {
       $set: {
         account_type: 'premium',
-        account_upgrade_time: new Date(),
         openai_api_token: encryptedToken
       }
     }
@@ -128,6 +131,56 @@ const upgradeCommand = async (telegramId, messageId, msg) => {
   await telegram.deleteMessage(telegramId, messageId);
 };
 
+const switchToBasicCommand = async (telegramId) => {
+  const { 
+    account_type: accountType ,
+    account_downgrade_time: accountDowngradeTime
+  } = await User.findOne({ telegram_id: telegramId }, 'account_type account_downgrade_time');
+  if (accountType === 'basic') throw new Error('ALREADY_BASIC_ACCOUNT');
+  const updatedData = {
+    account_type: 'basic',
+    account_downgrade_time: new Date()
+  };
+  if (accountDowngradeTime) {
+    const currentTime = new Date();
+    if (
+      currentTime.getFullYear() > accountDowngradeTime.getFullYear() ||
+      currentTime.getMonth() > accountDowngradeTime.getMonth() ||
+      currentTime.getDay() > accountDowngradeTime.getDay()
+    ) {
+      updatedData.basic_quota = {
+        image: 15,
+        text: 5
+      };
+    }
+  }
+  await User.findOneAndUpdate(
+    { telegram_id: telegramId },
+    { $set: updatedData }
+  );
+  const msg_response = 'Your account is downgraded to basic plan. You can always switch back to your premium plan by sending /switchtopremium command';
+  await telegram.sendTextualMessage(telegramId, msg_response);
+}
+
+const switchToPremiumCommand = async (telegramId) => {
+  const {
+    account_type: accountType,
+    openai_api_token: openaiToken
+  } = await User.findOne({ telegram_id: telegramId}, 'account_type openai_api_token');
+  if (accountType === 'premium') throw new Error('ALREADY_PREMIUM_ACCOUNT');
+  console.log(openaiToken);
+  if (accountType === 'basic' && !openaiToken) throw new Error('UNABLE_TO_SWITCH_TO_PREMIUM');
+  await User.findOneAndUpdate(
+    { telegram_id: telegramId },
+    {
+      $set: {
+        account_type: 'premium'
+      }
+    }
+  );
+  await telegram.sendTextualMessage(telegramId, 'Your account is upgraded back to premium plan.');
+}
+
 const textCommand = async (telegramId, msg, userInfo) => {
   if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');
   const isBasicAccount = (userInfo.accountType === 'basic');
@@ -135,7 +188,7 @@ const textCommand = async (telegramId, msg, userInfo) => {
   const openaiToken = userInfo.apiToken ?
     SecureToken.decryptToken(userInfo.apiToken) :
     process.env.OPENAI_SECRET_KEY;
-  const { msg_response, token_usage } = await openai.generateTextResponse(openaiToken, msg);
+  const { msg_response, token_usage } = await openai.generateTextResponse(openaiToken, isBasicAccount, msg);
   await telegram.sendTextualMessage(telegramId, msg_response);
   if (isBasicAccount) {
     await User.findOneAndUpdate({ telegram_id: telegramId }, { 'basic_quota.text': userInfo.textQuota - 1 });

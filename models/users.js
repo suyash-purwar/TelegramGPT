@@ -30,7 +30,7 @@ const Users = mongoose.model('Users', new mongoose.Schema({
     type: String,
     trim: true,
   },
-  account_upgrade_time: {
+  account_downgrade_time: {
     type: Date
   },
   account_deactivation_time: {

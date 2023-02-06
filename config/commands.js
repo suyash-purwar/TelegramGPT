@@ -18,11 +18,19 @@ const telegram_command = {
     },
     {
       command: 'howtoupgrade',
-      description: 'Steps to upgrade to premium'
+      description: 'Steps to upgrade to premium plan'
     },
     {
       command: 'upgrade',
-      description: 'Upgrades to premium account'
+      description: 'Upgrades to premium plan'
+    },
+    {
+      command: 'switchtobasic',
+      description: 'Switches to basic plan'
+    },
+    {
+      command: 'switchtopremium',
+      description: 'Switches to premium plan'
     }
   ]
 };

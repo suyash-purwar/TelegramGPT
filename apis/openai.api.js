@@ -17,14 +17,14 @@ export const verifyToken = async (apiKey) => {
   }
 };
 
-export const generateTextResponse = async (apiKey, query) => {
+export const generateTextResponse = async (apiKey, isBasicAccount, query) => {
   try {
     const configuration = new Configuration({ apiKey });
     const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
       prompt: query,
-      max_tokens: 50,
+      max_tokens: isBasicAccount ? 100 : 300,
       temperature: 0,
     });
     return {
