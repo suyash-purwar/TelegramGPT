@@ -101,6 +101,8 @@ const aboutCommand = async (telegramId) => {
 
 const howToUpgradeCommand = async (telegramId) => {
   const msg_response = `
+Follow the steps in order to upgrade your account to premium plan:
+
 1. Create your account on OpenAI by registering yourself here https://platform.openai.com/signup
 2. Go onto https://platform.openai.com/account/api-keys
 3. Click on 'Generate new secret key' and copy the generated secret key.
@@ -158,9 +160,9 @@ const switchToBasicCommand = async (telegramId) => {
     { telegram_id: telegramId },
     { $set: updatedData }
   );
-  const msg_response = 'Your account is downgraded to basic plan. You can always switch back to your premium plan by sending /switchtopremium command';
+  const msg_response = 'Your account is downgraded to basic plan. You can always switch back to your premium plan by sending /switchtopremium command.';
   await telegram.sendTextualMessage(telegramId, msg_response);
-}
+};
 
 const switchToPremiumCommand = async (telegramId) => {
   const {
@@ -168,7 +170,6 @@ const switchToPremiumCommand = async (telegramId) => {
     openai_api_token: openaiToken
   } = await User.findOne({ telegram_id: telegramId}, 'account_type openai_api_token');
   if (accountType === 'premium') throw new Error('ALREADY_PREMIUM_ACCOUNT');
-  console.log(openaiToken);
   if (accountType === 'basic' && !openaiToken) throw new Error('UNABLE_TO_SWITCH_TO_PREMIUM');
   await User.findOneAndUpdate(
     { telegram_id: telegramId },
@@ -179,7 +180,7 @@ const switchToPremiumCommand = async (telegramId) => {
     }
   );
   await telegram.sendTextualMessage(telegramId, 'Your account is upgraded back to premium plan.');
-}
+};
 
 const textCommand = async (telegramId, msg, userInfo) => {
   if (msg[0] === '/') throw new Error('COMMAND_DOES_NOT_EXIST');

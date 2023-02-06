@@ -79,7 +79,25 @@ export const processMsg = async (req, res) => {
       case 'INVALID_TOKEN':
         await botService.sendMessage(
           telegramId,
-          'Uh oh! The secret key you passed is invalid. Make sure you\'re passing the correct token.'
+          'Uh oh! The secret key you passed is invalid. Make sure you\'re passing the correct secret key.'
+        );
+        break;
+      case 'ALREADY_BASIC_ACCOUNT':
+        await botService.sendMessage(
+          telegramId,
+          'You are already using basic plan. If you want to upgrade to premium plan, send /switchtopremium command.'
+        );
+        break;
+      case 'ALREADY_PREMIUM_ACCOUNT':
+        await botService.sendMessage(
+          telegramId,
+          'You are already using premium plan. If you want to downgrade to basic plan, send /switchtobasic command.'
+        );
+        break;
+      case 'UNABLE_TO_SWITCH_TO_PREMIUM':
+        await botService.sendMessage(
+          telegramId,
+          'Uh oh! You cannot switch to premium plan just yet. Complete a one-time process of upgrading to premium. Send /howtoupgrade command to knows the steps to upgrading your account to premium plan.'
         );
         break;
       case 'INTERNAL_SERVER_ERROR':
