@@ -12,6 +12,17 @@ export default async function authenticate(req, res, next) {
     res.sendStatus(httpStatus.OK);
     return;
   }
+  console.log(req.body.message);
+  if (!('text' in req.body.message)) {
+    const msgTypes = ['photo', 'sticker', 'voice', 'document'];
+    for (let msgType of msgTypes) {
+      if (msgType in req.body.message) {
+        botService.sendMessage(telegramId, `Hephaestus isn't capable enough to process ${msgType} messages.`);
+        res.sendStatus(httpStatus.OK);
+        return;
+      }
+    }
+  }
   if (msg.startsWith('/start')) return next();
   // If the msg != '/start', check if user exists
   // If yes, call next(), otherwise, block
