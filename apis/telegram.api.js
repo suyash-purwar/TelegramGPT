@@ -8,6 +8,7 @@ export const sendTextualMessage = async (telegramId, message) => {
       text: message,
     });
   } catch (e) {
+    console.log(e);
     console.log(e.message);
     throw new Error('TELEGRAM_SERVICE_DOWN');
   }
@@ -23,6 +24,7 @@ export const sendImageMessage = async (telegramId, message) => {
       });
     });
   } catch (e) {
+    console.log(e);
     console.log(e.message);
     throw new Error('TELEGRAM_SERVICE_DOWN');
   }
@@ -37,6 +39,7 @@ export const deleteMessage = async (telegramId, messageId) => {
     });
   } catch (e) {
     console.log(e);
+    console.log(e.message);
     throw new Error('TELEGRAM_SERVICE_DOWN');
   }
 };

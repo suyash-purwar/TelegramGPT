@@ -1,4 +1,5 @@
 import { Configuration, OpenAIApi } from 'openai';
+import { promptTraining } from './../config/training-prompt.js'
 
 export const verifyToken = async (apiKey) => {
   try {
@@ -23,7 +24,7 @@ export const generateTextResponse = async (apiKey, isBasicAccount, query) => {
     const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
-      prompt: query,
+      prompt: `${ promptTraining }\n\n${ query }`,
       max_tokens: isBasicAccount ? 100 : 300,
       temperature: 0,
     });

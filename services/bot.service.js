@@ -5,7 +5,6 @@ import Analytics from '../models/analytics.js';
 import SecureToken from '../utils/secure-token.js';
 
 export const processMsg = async (telegramId, messageId, msg, userInfo) => {
-  console.log(userInfo, messageId);
   if (msg.startsWith('/start')) {
     await startCommand(telegramId);
   } else if (msg.startsWith('/off')) {
